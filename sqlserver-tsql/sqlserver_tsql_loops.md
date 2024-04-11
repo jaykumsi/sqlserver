@@ -1,172 +1,58 @@
 ![Tinitiate SQLSERVER Training](../images/sqlserver.png)
-# SQL SERVER LOOPS
 
-* Basic Loop 
-    * LOOPS for Repeated Execution
-```sql
-begin
-    declare @ctr int = 1;
-    
-    print 'Before Loop';
-    while @ctr <= 10
-    begin
-        print @ctr;
-        set @ctr = @ctr + 1;
-    end
-    print 'After Loop';
-end;
-```
-* Print a Multiplication Table
-```sql
--- ------------------------------
-begin
-    declare @num int = 17;
-    declare @ctr int = 1;
+# Loops in SQL Server
+In SQL Server, loops are used to execute a block of code repeatedly based on a condition. 
 
-    print concat(@num , ' Table:');
-    while @ctr <= 10
-    begin
-        print concat(@num, ' X ',@ctr, ' = ', @num*@ctr);
-        set @ctr = @ctr + 1;
-    end
-end;
-```
-* Print Day Name of 02, May for the last 40 Years
-```sql
--- -----------------------------------------------
-begin
-    declare @l_year int = year(getdate());
-    declare @l_end_year int = @l_year - 40;
-    declare @l_mm_dd varchar(10) = '05-04';
-    declare @l_date_str varchar(20);
-    declare @l_date date;
+## FOR Loop
+SQL Server does not have a traditional FOR loop like some other programming languages. However, you can achieve similar functionality using a WHILE loop with a counter variable.
 
-    -- while @l_year >= (@l_year - 40)
-    while @l_year >= @l_end_year
-    begin
-        -- print @l_year
-        
-        -- Build the Date String
-        -- STRING -> DATE FORMATS
-        -- https://www.mssqltips.com/sqlservertip/1145/date-and-time-conversions-using-sql-server/
-        -- YYYY-MM-DD (23 format type)
-        -- print concat(@l_year,'-',@l_mm_dd);
-        set @l_date_str = concat(@l_year,'-',@l_mm_dd);
-    
-        -- Convert String (in MMDDYYYY format) to DATE
-        set @l_date = convert(date, @l_date_str, 23);
-        
-        -- Print Date
-        print @l_date;
+Example: Print Names of First 5 Suppliers
+``` sql
+    DECLARE @Counter INT = 1;
 
-        -- Print Name of DAY from a DATE variable    
-        print datename(weekday, @l_date);
-    
-        -- Decrease the year by 1
-        set @l_year = @l_year - 1;
-    end;
-
-end;
-```
-* **NESTED LOOPS** Loop inside a loop
-```sql
--- ------------------------------------------------------
-begin
-    declare @ctrA int = 1;
-    declare @ctrB int = 1;
-
-    -- OUTER LOOP
-    while @ctrA <= 5
-    begin
-        -- print @ctrA;
-        --set @ctrA = @ctrA + 1; -- INCREMENT  (before use) 
-        --print @ctrA;
-    
-        -- INNER LOOP
-        while @ctrB <= 5
-        begin
-            print concat(@ctrA,' - ', @ctrB);
-            set @ctrB = @ctrB + 1; -- INCREMENT (after use)
-        end
-        set @ctrB = 1 -- reset to 1
-        -- print @ctrA;
-        set @ctrA = @ctrA + 1; -- INCREMENT  (before use)         
-    end
-    --
-end;
+    WHILE @Counter <= 5
+    BEGIN
+        SELECT supplier_name FROM suppliers WHERE supplier_id = @Counter;
+        SET @Counter = @Counter + 1;
+    END
 
 ```
-* Loop Control: BREAK, this when encountered exits the **immediate** loop (the loop in which the BREAK is mentioned.
-```sql
-begin
-    declare @ctrA int = 1;
-    declare @ctrB int = 1;
+In this example, we use a WHILE loop to print the names of the first 5 suppliers from the suppliers table. The loop runs as long as the @Counter variable is less than or equal to 5.
 
-    -- LOOP with BREAK (Ends the Loop)
-    while @ctrA <= 5
-    begin
-        print 'Step1'
-        print @ctrA;
-        if @ctrA = 3
-        begin
-            break
-        end
-        print 'Step2'
-        set @ctrA = @ctrA + 1; -- INCREMENT  (before use)         
-    end
-    --
-    print 'Outside the loop'
-end;
-```
-* Loop Control: CONTINUE, This breaks the ITERATION alone, loop executes
+## WHILE Loop
+ The WHILE loop executes a block of code repeatedly as long as a specified condition is true.
+
+Example: Decrease Prices of All Parts by 10%
 ```sql
-begin
-    declare @ctrA int = 0;
-    -- LOOP with continue (Ends the Iteration)
-    while @ctrA <= 5
-    begin
-        print 'Step1'
-        print @ctrA;
-        set @ctrA = @ctrA + 1; -- INCREMENT  (before use)
-        if @ctrA = 3
-        begin
-            continue
-        end
-        print 'Step2'
-                 
-    end
-    --
-    print 'Outside the loop'
-end;
-```
-* Loop Control: BREAK with Nested Loop
+    DECLARE @PartID INT;
+
+    -- Get the first Part ID
+    SELECT @PartID = MIN(part_id) FROM parts;
+
+    WHILE @PartID IS NOT NULL
+    BEGIN
+        -- Decrease the price by 10%
+        UPDATE parts SET price = price * 0.90 WHERE part_id = @PartID;
+
+        -- Get the next Part ID
+        SELECT @PartID = MIN(part_id) FROM parts WHERE part_id > @PartID;
+    END
+```    
+In this example, we use a WHILE loop to decrease the prices of all parts in the parts table by 10%. The loop continues until there are no more parts to update.
+
+## DO WHILE Loop
+ SQL Server does not have a built-in DO WHILE loop, but you can simulate it using a WHILE loop with a BEGIN...END block.
+
+Example: Add New Parts Until 20 Parts Exist
 ```sql
-begin
-    declare @ctrA int = 1;
-    declare @ctrB int = 1;
-    print '====='
-    -- OUTER LOOP
-    while @ctrA <= 5
-    begin
-        -- print @ctrA;
-        --set @ctrA = @ctrA + 1; -- INCREMENT  (before use) 
-        --print @ctrA;
-    
-        -- INNER LOOP
-        while @ctrB <= 5
-        begin
-            print concat(@ctrA,' - ', @ctrB);
-            -- if @ctrB=3
-            -- begin
-            --     break
-            -- end
-            
-            set @ctrB = @ctrB + 1; -- INCREMENT (after use)
-        end
-        set @ctrB = 1 -- reset to 1
-        -- print @ctrA;
-        set @ctrA = @ctrA + 1; -- INCREMENT  (before use)         
-    end
-    --
-end;
-```
+    DECLARE @PartCount INT;
+
+    SELECT @PartCount = COUNT(*) FROM parts;
+
+    WHILE @PartCount < 20
+    BEGIN
+        INSERT INTO parts (part_name, price) VALUES ('New Part', 50.00);
+        SELECT @PartCount = COUNT(*) FROM parts;
+    END
+```    
+In this example, we use a WHILE loop to simulate a DO WHILE loop by continuously adding new parts to the parts table until there are 20 parts. The loop checks the condition at the end of each iteration, ensuring that the code inside the loop is executed at least once.

@@ -1,87 +1,77 @@
-![Tinitiate SQLSERVER Training](../images/sqlserver.png)
-# Exceptions
-* **Exceptions = Runtime errors**
-* Syntax Error
-* Runtime errors, Handle runtime errors
-* Exceptions Handling
+# Handling Exceptions 
+ In SQL Server, exceptions (also known as errors) can occur during the execution of SQL statements. To handle these exceptions, you can use the TRY...CATCH block. Here's how you can use this construct with the emp and dept tables:
+
+Example: Preventing Insertion of Duplicate Employee IDs
+Suppose you have an emp table with a primary key on the emp_id column. You want to insert a new employee, but you need to ensure that the employee ID does not already exist in the table.
+
 ```sql
-
-
-
--- ERROR SCENARIO
--- ------------------------------------------------
-begin
-    declare @num1 int = 1;  -- Variable = container
-    declare @num2 int = 2;
-    declare @res int;
-    declare @Test int;
-
-    set @res = @num1 + @num2;
-    print 'Sum of Num1 and Num2';
-    print  'Sum: ' + cast(@res as varchar);
-    set @Test=1/0  
-
-    print 'Very Important Message'    
-end;
-
--- ERROR HANDLER
-* Handle the exception gracefully
--- ------------------------------------------------
-begin
-    declare @num1 int = 1;  -- Variable = container
-    declare @num2 int = 2;
-    declare @res int;
-    declare @Test int;
-    
-    -- Code Sub Unit
-    -- ------------------------- 
-    set @res = @num1 + @num2;
-    print 'Sum of Num1 and Num2';
-    print  'Sum: ' + cast(@res as varchar);
-    
-    begin try
-        set @Test=1/0
-    end try
-    begin catch
-        print 'SomeErrors'
-        SELECT  ERROR_NUMBER() AS ErrorNumber  
-                ,ERROR_SEVERITY() AS ErrorSeverity  
-                ,ERROR_STATE() AS ErrorState  
-                ,ERROR_PROCEDURE() AS ErrorProcedure  
-                ,ERROR_LINE() AS ErrorLine  
-                ,ERROR_MESSAGE() AS ErrorMessage;          
-    end catch
-    print 'Very Important Message'    
-end;
-
-
-
-begin
-    declare @Test int;
-    declare @l_error_number int;
-    declare @l_error_message varchar(1000);
-    declare @l_error_line int;  
-    -- ,ERROR_SEVERITY() AS ErrorSeverity  
-    -- ,ERROR_STATE() AS ErrorState  
-    -- ,ERROR_PROCEDURE() AS ErrorProcedure  
-
-    begin try
-        set @Test='A'
-    end try
-    begin catch
-        print 'Error Details'
-        SELECT  @l_error_number = ERROR_NUMBER()  
-                --,ERROR_SEVERITY() AS ErrorSeverity  
-                --,ERROR_STATE() AS ErrorState  
-                --,ERROR_PROCEDURE() AS ErrorProcedure  
-                ,@l_error_line = ERROR_LINE()  
-                ,@l_error_message = ERROR_MESSAGE();
-        print    'Err#: ' + cast(@l_error_number as varchar) 
-               + ' ErrorMsg: ' +  @l_error_message             
-               + ' Line#: ' +  cast(@l_error_line as varchar)
-                    
-    end catch
-    
-    print 'Very Important Message'    
-end;
+BEGIN TRY
+    -- Attempt to insert a new employee with an existing emp_id
+    INSERT INTO emp (emp_id, emp_name, job_title, dept_id)
+    VALUES (1, 'John Doe', 'Software Engineer', 1);
+END TRY
+BEGIN CATCH
+    IF ERROR_NUMBER() = 2627  -- Error number for a duplicate key violation
+        BEGIN
+            PRINT 'Error: Cannot insert duplicate employee ID.';
+        END
+    ELSE
+        BEGIN
+            PRINT 'An unexpected error occurred. Error number: ' + CAST(ERROR_NUMBER() AS VARCHAR);
+        END
+END CATCH
 ```
+
+ * We use a TRY...CATCH block to handle exceptions.
+ * Inside the TRY block, we attempt to insert a new employee into the emp table.
+ * If an error occurs (such as a duplicate key violation), the execution is transferred to the CATCH block.
+ * Inside the CATCH block, we check the error number using the ERROR_NUMBER() function.
+ * If the error number is 2627 (which corresponds to a duplicate key violation), we print a message indicating that a duplicate employee ID cannot be inserted.
+ * If a different error occurs, we print a generic message along with the error number.
+ 
+    By using the TRY...CATCH block, we can gracefully handle errors and provide meaningful feedback to the user or the application. This approach is useful for maintaining  data integrity and ensuring that the database operations are performed correctly.
+
+## Error functions
+ Error functions are used within a CATCH block to retrieve information about the error that caused the TRY block to transfer control to the CATCH block. These functions  provide details such as the error number, message, severity, state, procedure name, and line number where the error occurred. Here are the most commonly used error 
+* functions:
+
+**ERROR_NUMBER()**
+
+ Returns the error number of the error that caused the CATCH block to be  executed.
+```sql
+SELECT ERROR_NUMBER() AS ErrorNumber;
+```
+
+**ERROR_MESSAGE()**
+
+Returns the error message text of the error that caused the CATCH block to be executed.
+``` sql
+SELECT ERROR_MESSAGE() AS ErrorMessage;
+```
+
+**ERROR_SEVERITY()**
+
+Returns the severity level of the error that caused the CATCH block to be executed.
+```sql
+SELECT ERROR_SEVERITY() AS ErrorSeverity;
+```
+
+**ERROR_STATE()**
+Returns the state number of the error that caused the CATCH block to be executed.
+```sql
+SELECT ERROR_STATE() AS ErrorState;
+```
+**ERROR_PROCEDURE()**
+
+Returns the name of the stored procedure or trigger where the error occurred.
+```sql
+SELECT ERROR_PROCEDURE() AS ErrorProcedure;
+```
+
+**ERROR_LINE()**
+Returns the line number within the routine that caused the error.
+
+```sql
+SELECT ERROR_LINE() AS ErrorLine;
+```
+These error functions can only be used within a CATCH block and are very useful for diagnosing and handling errors in SQL Server. They provide detailed information about the error, which can be logged or used to take corrective action.

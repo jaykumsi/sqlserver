@@ -15,16 +15,38 @@ HELLO
 * String Functions
 * Date Functions
 
+## Data models
+* Students-courses
+* supplier -parts
+* emp schema
+* billing -products-customers,bill, billdetails
+
 ## T-SQL
 * Variables and Operators
+* Code Blocks (Begin .. end)
 * Conditional Statements
 * Loops
-* Code Blocks (Begin .. end)
+  * For loop
+  * While loop
+  * do while loop
 * Cursors
 * Exceptions
 * Functions
+  * Function with Input param
+  * Default values for params
+  * Explain Return
+  * Execute Function using Sleect
+  * Execute Function in Begin End
 * Procedures
+  * No params
+  * Input param
+  * Output param
+  * multiple ways to execute procs
+  * Default values for params
 * Views
+  * simple views
+  * Parameterized views
+  * Updatable views
 * Synonyms
 * Triggers
 * Dynamic SQL

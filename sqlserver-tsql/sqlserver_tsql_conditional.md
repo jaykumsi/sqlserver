@@ -1,96 +1,53 @@
 ![Tinitiate SQLSERVER Training](../images/sqlserver.png)
+
+# Conditional Statements in SQL Server 
+
+* Conditional statements in SQL Server, such as IF...ELSE, CASE, and IIF, are useful for executing different SQL statements based on specific conditions. Here's how you can use these statements with the emp, dept, and sal tables:
+
+## IF...ELSE Statement
+ The IF...ELSE statement allows you to execute a block of SQL statements if a condition is true, and another block if the condition is false.
+
+Example: Check if a Department Exists
+ ```sql
+    DECLARE @DeptName VARCHAR(100) = 'IT';
+
+    IF EXISTS (SELECT 1 FROM dept WHERE dept_name = @DeptName)
+        BEGIN
+            PRINT 'The department exists.';
+        END
+    ELSE
+        BEGIN
+            PRINT 'The department does not exist.';
+    END
+```
+In this example, we check if there is a department named 'IT' in the dept table. If it exists, we print a message indicating that the department exists. Otherwise, we print a message indicating that it does not exist.
+
+## CASE Statement
+ The CASE statement is used for conditional logic within a SELECT query. It evaluates a list of conditions and returns a result for the first condition that is true.
+
+Example: Categorize Employees Based on Salary
+ ```sql
+    SELECT 
+        emp_name,
+        CASE 
+            WHEN salary < 50000 THEN 'Low'
+            WHEN salary BETWEEN 50000 AND 100000 THEN 'Medium'
+            ELSE 'High'
+        END AS SalaryCategory
+    FROM emp;
+```
+In this example, we categorize employees into 'Low', 'Medium', and 'High' salary groups based on their salary in the emp table.
+
+## IIF Function
+ The IIF function is a shorthand way to write a simple IF...ELSE condition. It takes three arguments: a condition, a true value, and a false value.
+
+Example: Check if Salary is Above Average
 ```sql
 
--- T-SQL
--- -----------------------
-
--- Code blocks
--- -------------------------
-begin
-    declare @num1 int = 1;  -- Variable = container
-    declare @num2 int;
-    declare @res int;
-    
-    -- set @num1 = 10; 
-    set @num2 = 20;
-
-    set @res = @num1 + @num2;
-    print 'Sum of Num1 and Num2';
-    print  'Sum: ' + cast(@res as varchar);
-    print  @res;
-    select @res;
-
-end;
-
-
-
--- Variables Code blocks
--- -------------------------
-begin
-    declare @data1 int = 1; -- variable declare and initialize
-    declare @data2 int;     -- variable declare
-    
-    set @data2 = 10;  -- variable initialize
-    print @data2;  -- 10
-
-    set @data2 = 20;  -- variable re-assign
-    print @data2;  -- 20
-
-    print @data2+10; -- 30
-    print @data2;    -- 20
-end;
-
-
--- Conditional Statements
--- if and else
--- -------------------------
-begin
-    declare @data1 int = 1; -- variable declare and initialize
-    declare @data2 int;     -- variable declare
-    
-    set @data2 = 1;
-    if @data1 = @data2
-    begin
-        print '@data1 is equal to  @data2';
-    end;
-
-    set @data2 = 10;
-    if @data1 = @data2
-    begin
-        print '@data1 is equal to  @data2';
-    end
-    else
-    begin
-        print '@data1 is NOT equal to  @data2';
-    end;
-    
-end;
-
--- Conditional Statements
--- if and elseif else
--- -------------------------
-begin
-    declare @data1 int = 10; -- variable declare and initialize
-    
-    -- Less than equal to 5
-    -- Greater than 5 and less than equal to 10
-    -- Greater than 10
-    
-    if @data1 <= 5
-    begin
-        print '@data1 is Less than equal to 5' ;
-    end;
-    else
-    begin
-        if @data1 >5 and @data1 <=10
-        begin
-            print '@data1 is Greater than 5 and less than equal to 10' ;
-        end;
-        else
-        begin
-            print '@data1 is Greater than 10';
-        end;
-    end;
---    
-end;
+    SELECT 
+        emp_name,
+        salary,
+        IIF(salary > (SELECT AVG(salary) FROM emp), 'Above Average', 'Below Average') AS SalaryStatus
+    FROM emp;
 ```
+In this example, we use the IIF function to check if each employee's salary is above the average salary in the emp table. The result is a column that indicates whether each employee's salary is 'Above Average' or 'Below Average'.

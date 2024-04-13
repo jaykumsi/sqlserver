@@ -67,13 +67,4 @@ BEGIN
     --end
 END;
 
--- Positional param call
-select invoicing.fn_even_odd(12)
-       ,invoicing.fn_even_odd(15)
-       --,invoicing.fn_even_odd(@n1=12)
 
--- Calling Function with named parameter 
-declare @data varchar(100)
-exec @data = invoicing.fn_even_odd @n1=12
-print @data
-```

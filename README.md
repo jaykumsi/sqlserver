@@ -17,9 +17,9 @@ HELLO
 
 ## Data models
 * Students-courses
-* supplier -parts
-* emp schema
-* billing -products-customers,bill, billdetails
+* supplier-parts
+* Emp Schema
+* billing:: products,customers,bill, billdetails
 
 ## T-SQL
 * Variables and Operators
@@ -30,12 +30,12 @@ HELLO
   * While loop
   * do while loop
 * Cursors
-* Exceptions
+* Exceptions ( Multiple Exceptions, Single Exceptions, Exception Propogation Example)
 * Functions
   * Function with Input param
   * Default values for params
   * Explain Return
-  * Execute Function using Sleect
+  * Execute Function using Select
   * Execute Function in Begin End
 * Procedures
   * No params

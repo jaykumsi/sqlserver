@@ -1,306 +1,81 @@
 ![Tinitiate SQLSERVER Training](images/sqlserver.png)
 # SQL SERVER TRIGGERS
-In SQL Server, a trigger is a special type of stored procedure that is automatically executed in response to certain events occurring in the database. Triggers can be used to enforce business rules, validate data, and perform other actions when data is inserted, updated, or deleted from a table.
+In SQL Server, triggers are special types of stored procedures that automatically execute or fire when specific actions occur within a database table (or sometimes a view). They are commonly used for enforcing business rules, validating data, and maintaining an audit trail.
 
-There are two types of triggers in SQL Server:
+## **Types of Triggers**
 
-* **DML triggers**
+### After Triggers (Also known as FOR Triggers):
 
-DML triggers fire in response to changes to data in a table, such as an insert, update, or delete operation. They can be defined to execute either before or after the data modification operation.
+  Fire after the associated SQL statement (INSERT, UPDATE, DELETE) has executed successfully.
+  Useful for actions that require the certainty of a successful operation, such as logging, auditing, or complex business logic.
 
-* **DDL triggers**
+### Instead Of Triggers:
 
-DDL triggers fire in response to changes to the database schema, such as creating or altering tables, views, or stored procedur
+Fire instead of the associated SQL statement.
+Useful for overriding the standard actions of a SQL statement, such as modifying the behavior of an INSERT, UPDATE, or DELETE on a view that involves multiple base tables.
 
-* * *
-* Tables for Trigger demonstration
-```sql
--- Test Table for Trigger Demonstration
--- ----------------------------
-create table trigger_test (
-     test_id       int
-    ,test_date     date
-    ,test_string   varchar(1000)
-    ,test_decimal  decimal(10,2)
+### DML Triggers:
+
+Defined to react to data manipulation language (DML) events, such as INSERT, UPDATE, or DELETE actions on a table or view.
+
+### DDL Triggers:
+
+Defined to react to data definition language (DDL) events, such as CREATE, ALTER, or DROP actions on database objects.
+
+## Components of a Trigger
+
+### Trigger Event: 
+  The specific SQL statement that causes the trigger to fire, such as INSERT, UPDATE, or DELETE.
+
+### Trigger Action: 
+  The set of SQL statements that are executed when the trigger fires.
+
+Example: Creating an After Trigger for Auditing
+Suppose we have two tables: emp (where employee records are stored) and emp_audit (where changes to employee records are logged). Here’s how you might create an after trigger to log any updates made to employee data.
+
+Tables Setup
+sql
+Copy code
+-- Employee table
+CREATE TABLE emp (
+    emp_id INT PRIMARY KEY,
+    emp_name VARCHAR(255),
+    salary DECIMAL(10, 2)
 );
 
-create table trigger_test_mirror (
-     test_id       int
-    ,test_date     date
-    ,test_string   varchar(1000)
-    ,test_decimal  decimal(10,2)
-    ,action_type   varchar(100)
+-- Audit table
+CREATE TABLE emp_audit (
+    audit_id INT IDENTITY(1,1) PRIMARY KEY,
+    emp_id INT,
+    changed_on DATETIME,
+    old_salary DECIMAL(10, 2),
+    new_salary DECIMAL(10, 2)
 );
-
-drop table trigger_test_log;
-create table trigger_test_log (
-     log_id        int
-    ,log_date      date
-    ,log_message   varchar(1000)
-    ,eventval      xml
-);
-```
-
-## DML FOR Triggers
-A "FOR" trigger is executed before the data modification operation (INSERT, UPDATE, DELETE) takes place. It can be used to modify the data to be inserted, updated, or deleted before the operation is carried out. "FOR" triggers are commonly used with views, where the underlying table may not be directly modifiable.
-
-Here is an example of a "FOR" trigger that modifies data before an INSERT operation is carried out:
-
-```sql
-drop trigger trg_trigger_test;
-
-create trigger trg_for_trigger_test
-on trigger_test
-for insert,update,delete -- DML
-as
-begin
---
-  if (update (test_date) or update (test_string) or update (test_decimal))
-  begin
-    insert into trigger_test_mirror (test_id,test_date,test_string,test_decimal,action_type)
-    select test_id,test_date,test_string,test_decimal,'UPDATE' action_type
-    from   inserted; -- USE DATA FROM INSERTED
-  end 
-  else if (select count (*) from inserted) != 0
-  begin
-    insert into trigger_test_mirror (test_id,test_date,test_string,test_decimal,action_type)
-    select test_id,test_date,test_string,test_decimal,'INSERT' action_type
-    from   inserted;
-  end
-  else if (select count (*) from DELETED) != 0
-  begin
-    insert into trigger_test_mirror (test_id,test_date,test_string,test_decimal,action_type)
-    select test_id,test_date,test_string,test_decimal,'DELETE' action_type
-    from   deleted;
-  end
-
---
-end;
-
--- INSERT TEST
--- --------------------------------------------------------
-insert into trigger_test (test_id,test_date,test_string,test_decimal)
-values (1,getdate(),'TEST',100.2)
-
-select * from trigger_test;
-select * from trigger_test_mirror;
-
--- UPDATE TEST
--- --------------------------------------------------------
-update trigger_test 
-set    test_date    = getdate()+10
-where  test_id = 1;
-
-update trigger_test 
-set    test_decimal = 88.88
-where  test_id = 1;
-
-update trigger_test 
-set    test_string = 'TEST1'
-where  test_id = 1;
-
--- Test Query
-select * from trigger_test;
-select * from trigger_test_mirror;
-
-
--- DELETE TEST
--- --------------------------------------------------------
-delete from trigger_test where test_id = 1;
-
--- Test Query
-select * from trigger_test;
-select * from trigger_test_mirror;
-```
-* Trigger to change values
-```sql
--- Create TRIGGER with ONLY INSERT handler 
--- ---------------------------------------------------------
-create or alter trigger trg_for_trigger_test_upper
-on trigger_test
-for insert
-as
-begin
-  if (select count (*) from inserted) != 0)
-  begin
-    update trigger_test
-    set    test_string = (select upper(test_string) from inserted)
-    where  test_id     = (select test_id from inserted);
-  end
-end
-
--- TEST --
-insert into trigger_test (test_id,test_date,test_string,test_decimal)
-values (2,getdate(),'lower',100.2)
-
-update trigger_test
-set    test_string = 'abc'
-where  test_id = 2
--- See lower case 'abc' (as trigger doesnt handle updates)
-select * from trigger_test;
-
-
--- Add UPDATE handler to TRIGGER
--- ---------------------------------------------------------
-create or alter trigger trg_for_trigger_test_upper
-on trigger_test
-for insert,update
-as
-begin
-  if ((select count (*) from inserted) != 0) or update(test_string)
-  begin
-    update trigger_test
-    set    test_string = (select upper(test_string) from inserted)
-    where  test_id     = (select test_id from inserted);
-  end
-end
-
--- TEST --
-update trigger_test
-set    test_string = 'abc'
-where  test_id = 2
--- See upper case 'abc'
-select * from trigger_test;
-
-```
-
-
-
-
-### DML AFTER Triggers
-An "AFTER" trigger, as the name suggests, is executed after the data modification operation is carried out. It can be used to perform additional actions based on the changes made to the table.
-
-FOR | AFTER AFTER specifies that the DML trigger is fired only when all operations specified in the triggering SQL statement have executed successfully. All referential cascade actions and constraint checks also must succeed before this trigger fires. AFTER is the default when FOR is the only keyword specified. AFTER triggers cannot be defined on views.
-
-Here is an example of an "AFTER" trigger that logs changes to a table:
-```sql
-drop trigger trg_after_trigger_test;
---
-create trigger trg_after_trigger_test
-on trigger_test
-after insert,update,delete
-as
-begin
---
-  if (select count (*) from deleted) = 0
-  begin
-    insert into trigger_test_mirror (test_id,test_date,test_string,test_decimal,action_type)
-    select test_id,test_date,test_string,test_decimal,'INSERT' action_type
-    from   inserted;
-  end
-  else if (select count (*) from inserted) = 0
-  begin
-    insert into trigger_test_mirror (test_id,test_date,test_string,test_decimal,action_type)
-    select test_id,test_date,test_string,test_decimal,'DELETE' action_type
-    from   deleted;
-  end
-  else if (update (test_date) or update (test_string) or update (test_decimal))
-  begin
-    insert into trigger_test_mirror (test_id,test_date,test_string,test_decimal,action_type)
-    select test_id,test_date,test_string,test_decimal,'UPDATE' action_type
-    from   inserted; -- USE DATA FROM INSERTED
-  end 
---
-end;
-
-
--- INSERT TEST
--- --------------------------------------------------------
-insert into trigger_test (test_id,test_date,test_string,test_decimal)
-values (1,getdate(),'TEST',100.2)
-
-select * from trigger_test;
-select * from trigger_test_mirror;
-
--- UPDATE TEST
--- --------------------------------------------------------
-update trigger_test 
-set    test_date    = getdate()+10
-where  test_id = 1;
-
-update trigger_test 
-set    test_decimal = 88.88
-where  test_id = 1;
-
-update trigger_test 
-set    test_string = 'TEST1'
-where  test_id = 1;
-
--- Test Query
-select * from trigger_test;
-select * from trigger_test_mirror;
-
--- DELETE TEST
--- --------------------------------------------------------
-delete from trigger_test where test_id = 1;
-
--- Test Query
-select * from trigger_test;
-select * from trigger_test_mirror;
-```
-
-### DML INSTEAD OF Triggers
-"INSTEAD OF" trigger is a type of trigger that can be used to override the default behavior of an insert, update, or delete operation on a view or a table that has an associated INSTEAD OF trigger. An INSTEAD OF trigger is executed instead of the original insert, update, or delete operation and can be used to modify the data being inserted, updated, or deleted, or to perform additional actions.
-```sql
-create view vw_trigger_test
-as
-select test_id,test_date,test_string,test_decimal
-from   trigger_test;
-
-drop trigger trg_instead_trigger_test;
-create trigger trg_instead_trigger_test
-on vw_trigger_test instead of insert
-as
-begin
-  insert into trigger_test_mirror (test_id,test_date,test_string,test_decimal,action_type)
-  select test_id,test_date,upper(test_string),test_decimal,'INSERT' action_type
-  from   inserted;
-end;
-
--- INSERT TEST
--- --------------------------------------------------------
-insert into vw_trigger_test (test_id,test_date,test_string,test_decimal)
-values (3,getdate(),'new line',100.2)
-
-select * from trigger_test;
-select * from trigger_test_mirror;
-```
-
-### Multiple Triggers
-sp_settriggerorder
-
-## DDL Triggers
-DDL (Data Definition Language) trigger is a type of trigger that fires in response to a variety of DDL events that occur in the database. DDL events include events like creating or altering tables, indexes, views, stored procedures, and user-defined functions.
-
-DDL triggers can be useful for enforcing business rules or data integrity constraints, for auditing database changes, or for implementing custom security policies.
-```sql
-drop trigger trg_tinitiate_ddl;
-
-create trigger trg_tinitiate_ddl
-on database
-for create_table,alter_table,drop_table
-as
-begin
-  set nocount on;
-  insert into trigger_test_log (log_id,log_date,log_message,eventval)
-  values (1,getdate(),'DDL EVENT',EVENTDATA());
-end;
-
--- Test DDL Trigger
--- -------------------------------
-create table test1 (id int);
-drop table test1;
-select * from trigger_test_log
-```
-
-## Enable / Disable Trigger
-To enable a disabled trigger, you can use the ENABLE TRIGGER statement with the same syntax as above. Once a trigger is enabled, it becomes active again and will fire when the corresponding event occurs.
-
-It's important to note that disabling a trigger affects all users who access the table, not just the user who issued the DISABLE TRIGGER statement. Also, if a trigger is disabled, any pending trigger actions will not be executed, even after the trigger is re-enabled. So, it's important to ensure that you re-enable the trigger as soon as possible after you've finished the maintenance operation.
-```sql
-enable trigger dbo.trg_instead_trigger_test on dbo.vw_trigger_test;
-disable trigger dbo.trg_instead_trigger_test on dbo.vw_trigger_test;
-
-enable trigger all on dbo.trigger_test;
-disable trigger all on dbo.trigger_test;
-```
+Creating the Trigger
+sql
+Copy code
+CREATE TRIGGER trg_emp_after_update
+ON emp
+AFTER UPDATE
+AS
+BEGIN
+    INSERT INTO emp_audit (emp_id, changed_on, old_salary, new_salary)
+    SELECT 
+        i.emp_id, 
+        GETDATE(), 
+        d.salary,  -- Old salary
+        i.salary   -- New salary
+    FROM 
+        inserted i
+        INNER JOIN deleted d ON i.emp_id = d.emp_id;
+END;
+Explanation:
+Trigger Name: trg_emp_after_update
+Trigger Type: AFTER UPDATE
+Tables: emp (source table) and emp_audit (audit table)
+Functionality:
+When an update occurs on the emp table, the trigger fires after the update.
+The trigger inserts a record into the emp_audit table. This record includes the employee ID, the time of the change, the old salary (from the deleted pseudo-table), and the new salary (from the inserted pseudo-table).
+Trigger Behavior
+Inserted and Deleted Tables: SQL Server uses two special pseudo-tables, inserted and deleted, to hold the affected rows during the execution of a trigger for UPDATE statements. inserted contains the new version of the rows, while deleted contains the old versions.
+Performance Consideration: Triggers can significantly affect the performance of the operations that cause them to fire because they add extra processing. It's important to ensure that the code within a trigger is efficient and minimized for impact.
